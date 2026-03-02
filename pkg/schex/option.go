@@ -2,13 +2,18 @@ package schex
 
 import "sync/atomic"
 
+type (
+	HandlerCallback[T any] func(T, error)
+	ExitingCallback[T any] func([]T, error)
+)
+
 // option defines scheduler option
 type option[T any] struct {
 	maxPending       int
 	parallel         int
-	callback         func(T, error)
+	callback         HandlerCallback[T]
 	exitCbCalled     atomic.Bool
-	userExitCallback func(pendingJobs []T, exitReason error)
+	userExitCallback ExitingCallback[T]
 	scheExitCallback func(reason error)
 	mode             ScheduleMode
 }
@@ -39,7 +44,7 @@ func WithoutPendingLimitation[T any]() SchedulerOptionApplier[T] {
 }
 
 // WithCallback sets a callback that is invoked after task execution.
-func WithCallback[T any](cb func(T, error)) SchedulerOptionApplier[T] {
+func WithCallback[T any](cb HandlerCallback[T]) SchedulerOptionApplier[T] {
 	return func(o *option[T]) {
 		o.callback = cb
 	}
@@ -48,7 +53,7 @@ func WithCallback[T any](cb func(T, error)) SchedulerOptionApplier[T] {
 // WithExitCallback sets a callback invoked when the scheduler exits.
 // It receives remaining pending jobs and the exit reason.
 // The callback is guaranteed to be called at most once.
-func WithExitCallback[T any](cb func([]T, error)) SchedulerOptionApplier[T] {
+func WithExitCallback[T any](cb ExitingCallback[T]) SchedulerOptionApplier[T] {
 	return func(o *option[T]) {
 		o.userExitCallback = cb
 	}
