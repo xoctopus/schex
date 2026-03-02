@@ -1,0 +1,62 @@
+{
+	"ci": {
+		"CI": true
+	},
+	"make": {
+		"test_ignore": [
+			"_gen.go",
+			".pb.go",
+			"_mock.go",
+			"_genx_",
+			"main.go",
+			"testing.go",
+			"example/"
+		],
+		"format_ignore": [
+			".git/",
+			".xgo/",
+			"*.pb.go",
+			"*_genx_*"
+		],
+		"env": [
+			"GOWORK",
+			"off"
+		],
+		"hack_test": false,
+		"depends": [
+			{
+				"name": "golangci-lint",
+				"repo": "github.com/golangci/golangci-lint/v2/cmd/golangci-lint",
+				"version": "latest",
+				"type": "LINTER",
+				"description": ""
+			},
+			{
+				"name": "goimports-reviser",
+				"repo": "github.com/incu6us/goimports-reviser/v3",
+				"version": "latest",
+				"type": "FORMATER",
+				"description": ""
+			},
+			{
+				"name": "git-chglog",
+				"repo": "github.com/git-chglog/git-chglog/cmd/git-chglog",
+				"version": "latest",
+				"type": "DOC",
+				"description": "generating changelog"
+			},
+			{
+				"name": "devgen",
+				"repo": "github.com/xoctopus/devx/cmd/devgen",
+				"version": "main",
+				"type": "DEVGEN",
+				"description": "dev configuration generating"
+			}
+		],
+		"target": null,
+		"image": null
+	},
+	"lint": {
+		"lint": true
+	}
+}
