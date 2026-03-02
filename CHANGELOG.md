@@ -1,10 +1,18 @@
 
 <a name="HEAD"></a>
-## [HEAD](https://github.com/xoctopus/schex/compare/v0.0.1...HEAD) (0001-01-01)
+## [HEAD](https://github.com/xoctopus/schex/compare/v0.0.1...HEAD)
+
+> 2026-03-02
+
+### Chore
+
+* code cleanup
 
 
 <a name="v0.0.1"></a>
-## v0.0.1 (2026-03-02)
+## v0.0.1
+
+> 2026-03-02
 
 ### Chore
 
