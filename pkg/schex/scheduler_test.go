@@ -6,8 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/xoctopus/schex/pkg/schex"
 	"github.com/xoctopus/x/misc/must"
+
+	"github.com/xoctopus/schex/pkg/schex"
 )
 
 var count atomic.Int64
