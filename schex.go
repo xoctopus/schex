@@ -17,6 +17,7 @@ func (f JobFunc[T]) Do(ctx context.Context, v T) error {
 type Scheduler[T any] interface {
 	Push(context.Context, T) error
 	Run(context.Context) error
+	Pending() int
 	Close()
 }
 

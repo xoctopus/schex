@@ -8,7 +8,7 @@ import (
 
 	"github.com/xoctopus/x/misc/must"
 
-	"github.com/xoctopus/schex/pkg/schex"
+	schex2 "github.com/xoctopus/schex"
 )
 
 var count atomic.Int64
@@ -23,10 +23,10 @@ func (MockHandler[T]) Do(ctx context.Context, v T) error {
 func BenchmarkPushConcurrent(b *testing.B) {
 	ctx := context.Background()
 
-	s := schex.NewScheduler[int](
-		schex.JobFunc[int](func(context.Context, int) error { return nil }),
-		schex.WithoutPendingLimitation[int](),
-		schex.WithParallel[int](8),
+	s := schex2.NewScheduler[int](
+		schex2.JobFunc[int](func(context.Context, int) error { return nil }),
+		schex2.WithoutPendingLimitation[int](),
+		schex2.WithParallel[int](8),
 	)
 
 	must.NoError(s.Run(ctx))
@@ -41,10 +41,10 @@ func BenchmarkPushConcurrent(b *testing.B) {
 	})
 }
 
-func bench[T any](b *testing.B, options ...schex.SchedulerOptionApplier[T]) {
+func bench[T any](b *testing.B, options ...schex2.SchedulerOptionApplier[T]) {
 	ctx := context.Background()
 
-	s := schex.NewScheduler[T](&MockHandler[T]{}, options...)
+	s := schex2.NewScheduler[T](&MockHandler[T]{}, options...)
 
 	_ = s.Run(ctx)
 
@@ -65,45 +65,45 @@ func Benchmark(b *testing.B) {
 	b.Run("LIFO", func(b *testing.B) {
 		bench(
 			b,
-			schex.WithoutPendingLimitation[int](),
-			schex.WithParallel[int](16),
-			schex.WithLifoScheduleMode[int](),
+			schex2.WithoutPendingLimitation[int](),
+			schex2.WithParallel[int](16),
+			schex2.WithLifoScheduleMode[int](),
 		)
 	})
 
 	b.Run("FIFO", func(b *testing.B) {
 		bench(
 			b,
-			schex.WithoutPendingLimitation[int](),
-			schex.WithParallel[int](16),
-			schex.WithFifoScheduleMode[int](),
+			schex2.WithoutPendingLimitation[int](),
+			schex2.WithParallel[int](16),
+			schex2.WithFifoScheduleMode[int](),
 		)
 	})
 
 	b.Run("Concurrency100", func(b *testing.B) {
 		bench(
 			b,
-			schex.WithoutPendingLimitation[int](),
-			schex.WithParallel[int](100),
-			schex.WithFifoScheduleMode[int](),
+			schex2.WithoutPendingLimitation[int](),
+			schex2.WithParallel[int](100),
+			schex2.WithFifoScheduleMode[int](),
 		)
 	})
 
 	b.Run("Concurrency1000", func(b *testing.B) {
 		bench(
 			b,
-			schex.WithoutPendingLimitation[int](),
-			schex.WithParallel[int](1000),
-			schex.WithFifoScheduleMode[int](),
+			schex2.WithoutPendingLimitation[int](),
+			schex2.WithParallel[int](1000),
+			schex2.WithFifoScheduleMode[int](),
 		)
 	})
 
 	b.Run("Concurrency10000", func(b *testing.B) {
 		bench(
 			b,
-			schex.WithoutPendingLimitation[int](),
-			schex.WithParallel[int](10000),
-			schex.WithFifoScheduleMode[int](),
+			schex2.WithoutPendingLimitation[int](),
+			schex2.WithParallel[int](10000),
+			schex2.WithFifoScheduleMode[int](),
 		)
 	})
 }

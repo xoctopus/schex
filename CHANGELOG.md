@@ -1,11 +1,18 @@
 
 <a name="HEAD"></a>
-## [HEAD](https://github.com/xoctopus/schex/compare/v0.0.1...HEAD)
+## [HEAD](https://github.com/xoctopus/schex/compare/v0.0.2...HEAD)
+
+> 0001-01-01
+
+
+<a name="v0.0.2"></a>
+## [v0.0.2](https://github.com/xoctopus/schex/compare/v0.0.1...v0.0.2)
 
 > 2026-03-02
 
 ### Chore
 
+* export HandlerCallback and ExitingCallback
 * code cleanup
 
 ### Doc

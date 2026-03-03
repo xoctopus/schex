@@ -182,6 +182,13 @@ func (s *scheduler[T]) do(ctx context.Context, v T) {
 	err = s.fn.Do(ctx, v)
 }
 
+func (s *scheduler[T]) Pending() int {
+	if s.running.Load() {
+		return int(s.pending.Load())
+	}
+	return 0
+}
+
 func (s *scheduler[T]) Close() {
 	s.onceClose.Do(
 		func() {
