@@ -1,6 +1,6 @@
 # schex
 
-a simple scheculer implement
+a simple scheduler implement
 
 1. FIFO/LIFO
 2. concurrency

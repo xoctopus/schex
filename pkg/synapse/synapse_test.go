@@ -170,7 +170,9 @@ func TestNewSynapse(t *testing.T) {
 	Expect(t, ts1, Equal(ts2))
 	Expect(t, ok1, Equal(ok2))
 
+	Expect(t, s.Canceled(), BeFalse())
 	s.Cancel(nil)
 	<-s.Done()
+	Expect(t, s.Canceled(), BeTrue())
 	Expect(t, s.Spawn(func(ctx context.Context) {}), IsCodeError(ERROR__SYNAPSE_CLOSED))
 }

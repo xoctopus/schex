@@ -2,12 +2,14 @@ package schex_test
 
 import (
 	"context"
+	"errors"
 	"runtime"
 	"strconv"
 	"testing"
 	"time"
 
 	"github.com/xoctopus/x/misc/must"
+	. "github.com/xoctopus/x/testx"
 
 	"github.com/xoctopus/schex/pkg/schex"
 )
@@ -87,7 +89,7 @@ func Benchmark(b *testing.B) {
 			bench(
 				b,
 				schex.WithoutPendingLimitation[int](),
-				schex.WithParallel[int](parallel),
+				schex.WithParallel[int](parallel+1),
 				schex.WithFifoScheduleMode[int](),
 				schex.WithCloseTimeout[int](timeout),
 			)
@@ -97,11 +99,72 @@ func Benchmark(b *testing.B) {
 			bench(
 				b,
 				schex.WithoutPendingLimitation[int](),
-				schex.WithParallel[int](parallel),
+				schex.WithParallel[int](parallel+1),
 				schex.WithLifoScheduleMode[int](),
 				schex.WithCloseTimeout[int](timeout),
 			)
 		})
 		runtime.GC()
 	}
+}
+
+func TestScheduler(t *testing.T) {
+	expect := errors.New("callback")
+	s := schex.NewScheduler(
+		schex.JobFunc[int](func(ctx context.Context, v int) error {
+			if v == 2 {
+				return expect
+			}
+			return nil
+		}),
+		schex.WithCallback(func(v int, err error) {
+			if errors.Is(err, expect) {
+				Expect(t, v, Equal(2))
+			}
+		}),
+		schex.WithExitCallback(func(pending []int, err error) {
+			Expect(t, err, IsCodeError(schex.ERROR__SCHEDULER_CANCELED))
+		}),
+		schex.WithMaxPending[int](2),
+		schex.WithoutDetached[int](),
+	)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	Expect(t, s.Run(ctx), Succeed())
+	Expect(t, s.Push(ctx, 2), Succeed())
+	Expect(t, s.Push(ctx, 1), Succeed())
+	Expect(t, s.Close(), Succeed())
+
+	s = schex.NewScheduler(
+		schex.JobFunc[int](func(ctx context.Context, v int) error {
+			switch v {
+			case 1:
+				panic(expect)
+			default:
+				panic("string")
+			}
+		}),
+		schex.WithCallback(func(v int, err error) {
+			Expect(t, err, IsCodeError(schex.ERROR__SCHEDULER_JOB_PANICKED))
+			switch v {
+			case 1:
+				Expect(t, err, IsError(expect))
+			default:
+				Expect(t, err, ErrorContains("string"))
+			}
+		}),
+		schex.WithMaxPending[int](2),
+	)
+	ctx = context.Background()
+	Expect(t, s.Push(ctx, 1), Succeed())
+	Expect(t, s.Push(ctx, 2), Succeed())
+	Expect(t, s.Push(ctx, 3), IsCodeError(schex.ERROR__REACH_MAX_PENDING))
+
+	Expect(t, s.Run(ctx), Succeed())
+	Expect(t, s.Run(ctx), IsCodeError(schex.ERROR__SCHEDULER_RERUN))
+	time.Sleep(2 * time.Second)
+
+	Expect(t, s.Close(), Succeed())
+	Expect(t, s.Push(ctx, 1), IsCodeError(schex.ERROR__SCHEDULER_CANCELED))
 }
