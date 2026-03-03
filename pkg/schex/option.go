@@ -21,6 +21,7 @@ type option[T any] struct {
 	userExitCallback ExitingCallback[T]
 	scheExitCallback func(reason error)
 	closeTimeout     time.Duration
+	disableDetached  bool
 	mode             ScheduleMode
 }
 
@@ -87,5 +88,16 @@ func WithLifoScheduleMode[T any]() SchedulerOptionApplier[T] {
 func WithCloseTimeout[T any](du time.Duration) SchedulerOptionApplier[T] {
 	return func(o *option[T]) {
 		o.closeTimeout = du
+	}
+}
+
+// WithoutDetached (Decouple from parent lifecycle)
+// If false(the default mode), the internal context is derived using
+// context.WithoutCancel(parent). This allows the popped task to ignore
+// cancellation signals or deadlines from the parent context, while still
+// inheriting and propagating existing context values (e.g., TraceID, UserID).
+func WithoutDetached[T any]() SchedulerOptionApplier[T] {
+	return func(o *option[T]) {
+		o.disableDetached = true
 	}
 }

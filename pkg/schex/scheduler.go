@@ -64,12 +64,10 @@ type scheduler[T any] struct {
 	pending atomic.Int64
 	// running if scheduler is running
 	running atomic.Bool
-	// closing if scheduler is closing
-	closing atomic.Bool
 }
 
 func (s *scheduler[T]) Push(_ context.Context, v T) error {
-	if s.closing.Load() {
+	if s.syn != nil && s.syn.Canceled() {
 		return codex.New(ERROR__SCHEDULER_CANCELED)
 	}
 
@@ -157,10 +155,11 @@ func (s *scheduler[T]) run(ctx context.Context) {
 		s.cond.L.Unlock()
 
 		if ok {
-			// if job was popped and is handling. the context should not be affected
-			// by this cancel. the context input just control lifetime of each runner
 			s.pending.Add(-1)
-			s.do(context.WithoutCancel(ctx), v)
+			if !s.disableDetached {
+				ctx = context.WithoutCancel(ctx)
+			}
+			s.do(ctx, v)
 		}
 	}
 }
@@ -168,8 +167,15 @@ func (s *scheduler[T]) run(ctx context.Context) {
 func (s *scheduler[T]) do(ctx context.Context, v T) {
 	var err error
 	defer func() {
-		if x := recover(); x != nil {
-			err = codex.New(ERROR__SCHEDULER_JOB_PANICKED)
+		switch x := recover().(type) {
+		case nil:
+		case error:
+			err = codex.Wrap(ERROR__SCHEDULER_JOB_PANICKED, x)
+		default:
+			err = codex.Errorf(
+				ERROR__SCHEDULER_JOB_PANICKED,
+				"caused by: %v", x,
+			)
 		}
 		if s.callback != nil {
 			s.callback(v, err)
@@ -179,10 +185,7 @@ func (s *scheduler[T]) do(ctx context.Context, v T) {
 }
 
 func (s *scheduler[T]) Pending() int {
-	if s.running.Load() {
-		return int(s.pending.Load())
-	}
-	return 0
+	return int(s.pending.Load())
 }
 
 func (s *scheduler[T]) Close() error {
