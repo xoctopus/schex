@@ -2,7 +2,11 @@
 <a name="HEAD"></a>
 ## [HEAD](https://github.com/xoctopus/schex/compare/v0.0.2...HEAD)
 
-> 0001-01-01
+> 2026-03-03
+
+### Feat
+
+* add Task.Pending
 
 
 <a name="v0.0.2"></a>

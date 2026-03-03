@@ -1,11 +1,16 @@
 package schex
 
-import "sync/atomic"
+import (
+	"sync/atomic"
+	"time"
+)
 
 type (
 	HandlerCallback[T any] func(T, error)
 	ExitingCallback[T any] func([]T, error)
 )
+
+const MaxParallel = 100000
 
 // option defines scheduler option
 type option[T any] struct {
@@ -15,6 +20,7 @@ type option[T any] struct {
 	exitCbCalled     atomic.Bool
 	userExitCallback ExitingCallback[T]
 	scheExitCallback func(reason error)
+	closeTimeout     time.Duration
 	mode             ScheduleMode
 }
 
@@ -33,6 +39,9 @@ func WithMaxPending[T any](maxPending int) SchedulerOptionApplier[T] {
 func WithParallel[T any](parallel int) SchedulerOptionApplier[T] {
 	return func(o *option[T]) {
 		o.parallel = parallel
+		if o.parallel > MaxParallel {
+			o.parallel = MaxParallel
+		}
 	}
 }
 
@@ -70,5 +79,13 @@ func WithFifoScheduleMode[T any]() SchedulerOptionApplier[T] {
 func WithLifoScheduleMode[T any]() SchedulerOptionApplier[T] {
 	return func(o *option[T]) {
 		o.mode = LIFO
+	}
+}
+
+// WithCloseTimeout sets timeout to handle post-close when Scheduler.Close
+// The default value is 0 means waiting all paralleled goroutines exited gracefully
+func WithCloseTimeout[T any](du time.Duration) SchedulerOptionApplier[T] {
+	return func(o *option[T]) {
+		o.closeTimeout = du
 	}
 }

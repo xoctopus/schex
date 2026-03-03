@@ -18,7 +18,7 @@ type Scheduler[T any] interface {
 	Push(context.Context, T) error
 	Run(context.Context) error
 	Pending() int
-	Close()
+	Close() error
 }
 
 type Tasks[T any] interface {

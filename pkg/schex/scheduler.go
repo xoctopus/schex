@@ -10,19 +10,21 @@ import (
 	"github.com/xoctopus/x/container/queue"
 	"github.com/xoctopus/x/container/stack"
 	"github.com/xoctopus/x/misc/must"
+
+	"github.com/xoctopus/schex/pkg/synapse"
 )
 
 func NewScheduler[T any](fn Job[T], appliers ...SchedulerOptionApplier[T]) Scheduler[T] {
 	must.BeTrueF(fn != nil, "job handler is required")
 	s := &scheduler[T]{
 		option: option[T]{
-			maxPending: 1,
-			parallel:   1,
-			mode:       FIFO,
+			maxPending:   1,
+			parallel:     1,
+			mode:         FIFO,
+			closeTimeout: 3 * time.Second,
 		},
-		fn:     fn,
-		cond:   sync.NewCond(&sync.Mutex{}),
-		exited: make(chan struct{}, 1),
+		fn:   fn,
+		cond: sync.NewCond(&sync.Mutex{}),
 	}
 	for _, applier := range appliers {
 		applier(&s.option)
@@ -52,25 +54,18 @@ type scheduler[T any] struct {
 	option[T]
 
 	cond *sync.Cond
+	syn  synapse.Synapse
+
 	// fn job handler
 	fn Job[T]
 	// tasks task list
 	tasks Tasks[T]
 	// pending atomic counter for pending tasks
 	pending atomic.Int64
-	// wg holding all parallel go routines
-	wg sync.WaitGroup
 	// running if scheduler is running
 	running atomic.Bool
 	// closing if scheduler is closing
 	closing atomic.Bool
-	// exited signal for scheduler finishing exiting and cleaning up when closing
-	// gracefully
-	exited chan struct{}
-	// onceClose Close idempotency
-	onceClose sync.Once
-	// cancel cancel scheduler context callback
-	cancel context.CancelCauseFunc
 }
 
 func (s *scheduler[T]) Push(_ context.Context, v T) error {
@@ -100,60 +95,61 @@ Append:
 	return nil
 }
 
-func (s *scheduler[T]) Run(ctx context.Context) error {
+func (s *scheduler[T]) Run(ctx context.Context) (err error) {
 	if !s.running.CompareAndSwap(false, true) {
 		return codex.New(ERROR__SCHEDULER_RERUN)
 	}
-	ctx, s.cancel = context.WithCancelCause(ctx)
-	go s.shutdown(ctx)
+
+	s.syn = synapse.NewSynapse(
+		ctx,
+		synapse.WithBeforeCloseFunc(func(ctx context.Context) {
+			go func() {
+				for {
+					select {
+					case <-ctx.Done():
+						return
+					default:
+						s.cond.Broadcast()
+						time.Sleep(10 * time.Millisecond)
+					}
+				}
+			}()
+		}),
+		synapse.WithAfterCloseFunc(func(cause error) error {
+			if s.exitCbCalled.CompareAndSwap(false, true) {
+				if s.scheExitCallback != nil {
+					s.scheExitCallback(cause)
+				}
+			}
+			return nil
+		}),
+		synapse.WithShutdownTimeout(s.closeTimeout),
+	)
+
+	defer func() {
+		if err != nil {
+			s.syn.Cancel(err)
+			<-s.syn.Done()
+		}
+	}()
+
 	for range s.parallel {
-		s.wg.Go(func() {
-			s.run(ctx)
-		})
+		if err = s.syn.Spawn(s.run); err == nil {
+			continue
+		}
+		return
 	}
 	return nil
-}
-
-func (s *scheduler[T]) shutdown(ctx context.Context) {
-	<-ctx.Done()
-	if s.closing.CompareAndSwap(false, true) {
-		defer close(s.exited)
-
-		waited := make(chan struct{}, 1)
-		// wait all scheduling routines exiting
-		go func() {
-			s.wg.Wait()
-			waited <- struct{}{}
-		}()
-		// wake up all hanging scheduling routines for exiting
-	Loop:
-		for {
-			select {
-			case <-waited:
-				break Loop
-			default:
-				s.cond.Broadcast()
-				time.Sleep(20 * time.Millisecond)
-			}
-		}
-		// do clean up after exiting
-		if s.exitCbCalled.CompareAndSwap(false, true) {
-			if s.scheExitCallback != nil {
-				s.scheExitCallback(context.Cause(ctx))
-			}
-		}
-		s.exited <- struct{}{}
-	}
 }
 
 func (s *scheduler[T]) run(ctx context.Context) {
 	for {
 		s.cond.L.Lock()
 		// avoid spurious waking up
-		for s.tasks.Len() == 0 && !s.closing.Load() {
+		for s.tasks.Len() == 0 && !s.syn.Canceled() {
 			s.cond.Wait()
 		}
-		if s.closing.Load() {
+		if s.syn.Canceled() {
 			s.cond.L.Unlock()
 			return
 		}
@@ -189,11 +185,13 @@ func (s *scheduler[T]) Pending() int {
 	return 0
 }
 
-func (s *scheduler[T]) Close() {
-	s.onceClose.Do(
-		func() {
-			s.cancel(codex.New(ERROR__SCHEDULER_CANCELED))
-			<-s.exited
-		},
-	)
+func (s *scheduler[T]) Close() error {
+	if s.syn != nil {
+		s.syn.Cancel(codex.New(ERROR__SCHEDULER_CANCELED))
+		err := s.syn.Err()
+		if codex.IsCode(err, synapse.ERROR__SYNAPSE_CLOSE_TIMEOUT) {
+			return err
+		}
+	}
+	return nil
 }
