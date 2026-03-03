@@ -7,6 +7,7 @@
 ### Feat
 
 * add Task.Pending
+* **schex:** use Synapse as worker continer
 
 
 <a name="v0.0.2"></a>
