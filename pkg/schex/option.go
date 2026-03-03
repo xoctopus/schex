@@ -10,7 +10,7 @@ type (
 	ExitingCallback[T any] func([]T, error)
 )
 
-const MaxParallel = 100000
+const MaxParallel = 10000
 
 // option defines scheduler option
 type option[T any] struct {

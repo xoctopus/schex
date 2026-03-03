@@ -2,6 +2,7 @@ package schex_test
 
 import (
 	"context"
+	"runtime"
 	"strconv"
 	"testing"
 	"time"
@@ -81,7 +82,7 @@ func Benchmark(b *testing.B) {
 		)
 	})
 
-	for parallel := 100; parallel <= schex.MaxParallel*10000; parallel *= 10 {
+	for parallel := 100; parallel <= schex.MaxParallel; parallel *= 10 {
 		b.Run("FIFO_x"+strconv.Itoa(parallel), func(b *testing.B) {
 			bench(
 				b,
@@ -91,6 +92,7 @@ func Benchmark(b *testing.B) {
 				schex.WithCloseTimeout[int](timeout),
 			)
 		})
+		runtime.GC()
 		b.Run("LIFO_x"+strconv.Itoa(parallel), func(b *testing.B) {
 			bench(
 				b,
@@ -100,5 +102,6 @@ func Benchmark(b *testing.B) {
 				schex.WithCloseTimeout[int](timeout),
 			)
 		})
+		runtime.GC()
 	}
 }

@@ -1,8 +1,18 @@
 
 <a name="HEAD"></a>
-## [HEAD](https://github.com/xoctopus/schex/compare/v0.0.2...HEAD)
+## [HEAD](https://github.com/xoctopus/schex/compare/v0.0.3...HEAD)
+
+> 0001-01-01
+
+
+<a name="v0.0.3"></a>
+## [v0.0.3](https://github.com/xoctopus/schex/compare/v0.0.2...v0.0.3)
 
 > 2026-03-03
+
+### Doc
+
+* update CHANGELOG
 
 ### Feat
 
