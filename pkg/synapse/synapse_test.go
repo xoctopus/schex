@@ -161,6 +161,8 @@ func TestNewSynapse(t *testing.T) {
 	defer cancel()
 
 	s := NewSynapse(ctx)
+	Expect(t, s.Parent(), Equal(ctx))
+	Expect(t, s.Children(), NotEqual(ctx))
 
 	Expect(t, s.Value("key"), Equal(ctx.Value("key")))
 	Expect(t, s.Value("non"), Equal(ctx.Value("non")))

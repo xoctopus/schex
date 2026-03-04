@@ -1,11 +1,26 @@
 
 <a name="HEAD"></a>
-## [HEAD](https://github.com/xoctopus/schex/compare/v0.0.3...HEAD)
+## [HEAD](https://github.com/xoctopus/schex/compare/v0.0.4...HEAD)
 
-> 2026-03-03
+> 2026-03-04
+
+### Feat
+
+* **synapse:** add   api
+
+
+<a name="v0.0.4"></a>
+## [v0.0.4](https://github.com/xoctopus/schex/compare/v0.0.3...v0.0.4)
+
+> 2026-03-04
+
+### Feat
+
+* **schex:** add detched optoin
 
 ### Test
 
+* unit and bench tests
 * update benchmarking
 
 

@@ -13,6 +13,8 @@ import (
 type Synapse interface {
 	context.Context
 
+	Parent() context.Context
+	Children() context.Context
 	Spawn(func(context.Context)) error
 	Cancel(error)
 	Canceled() bool
@@ -57,6 +59,14 @@ type synapse struct {
 	canceled atomic.Bool
 	err      error
 	done     chan struct{}
+}
+
+func (x *synapse) Parent() context.Context {
+	return x.inherited
+}
+
+func (x *synapse) Children() context.Context {
+	return x.dispatched
 }
 
 func (x *synapse) Deadline() (time.Time, bool) {
