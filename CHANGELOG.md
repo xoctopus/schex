@@ -6,7 +6,7 @@
 
 ### Feat
 
-* **synapse:** add   api
+* **synapse:** add `Parent` `Children` api
 
 
 <a name="v0.0.4"></a>
