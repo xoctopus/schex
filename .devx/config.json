@@ -23,6 +23,7 @@
 			"off"
 		],
 		"hack_test": false,
+		"enable_bench_cover": true,
 		"depends": [
 			{
 				"name": "golangci-lint",

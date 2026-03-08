@@ -107,10 +107,6 @@ view-cover: cover
 ci-cover: lint cover
 
 
-targets: 
-
-images: 
-
 fmt: dep clean
 	@echo "==> formating code"
 	@goimports-reviser -rm-unused \
