@@ -1,8 +1,28 @@
 
 <a name="HEAD"></a>
-## [HEAD](https://github.com/xoctopus/schex/compare/v0.0.4...HEAD)
+## [HEAD](https://github.com/xoctopus/schex/compare/v0.1.0...HEAD)
+
+> 0001-01-01
+
+
+<a name="v0.1.0"></a>
+## [v0.1.0](https://github.com/xoctopus/schex/compare/v0.0.5...v0.1.0)
+
+> 2026-03-08
+
+### Chore
+
+* **deps:** bump xoctopus/x to v0.4.0
+
+
+<a name="v0.0.5"></a>
+## [v0.0.5](https://github.com/xoctopus/schex/compare/v0.0.4...v0.0.5)
 
 > 2026-03-04
+
+### Doc
+
+* update CHANGELOG
 
 ### Feat
 

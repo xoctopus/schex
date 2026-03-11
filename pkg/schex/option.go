@@ -39,10 +39,7 @@ func WithMaxPending[T any](maxPending int) SchedulerOptionApplier[T] {
 // the default value is 1.
 func WithParallel[T any](parallel int) SchedulerOptionApplier[T] {
 	return func(o *option[T]) {
-		o.parallel = parallel
-		if o.parallel > MaxParallel {
-			o.parallel = MaxParallel
-		}
+		o.parallel = min(parallel, MaxParallel)
 	}
 }
 

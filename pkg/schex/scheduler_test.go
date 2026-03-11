@@ -128,8 +128,7 @@ func TestScheduler(t *testing.T) {
 		schex.WithMaxPending[int](2),
 		schex.WithoutDetached[int](),
 	)
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	Expect(t, s.Run(ctx), Succeed())
 	Expect(t, s.Push(ctx, 2), Succeed())
